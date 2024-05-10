@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MONITOREO DE PLAGAS</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+     h1 {
+            color: #555;
+            text-align: center;
+        }
+    
+    form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        margin: 20px auto;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    input[type="date"],
+    input[type="text"],
+    select,
+    input[type="number"] {
+        width: calc(100% - 20px);
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        color: #555;
+    }
+    
+    input[type="button"] {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    
+    input[type="button"]:hover {
+        background-color: #45a049;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
+    
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    canvas {
+        margin-top: 20px;
+        max-width: 100%;
+    }
+</style>
+</head>
+<body>
+<h1>LizRoses</h1>
+<form id="formulario">
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" name="fecha">
+    
+    <label for="semana">Semana:</label>
+    <input type="text" id="semana" name="semana">
+    
+    <label for="bloque">Bloque:</label>
+    <select id="bloque" name="bloque">
+        <option value="Bloque 1">Bloque 1</option>
+        <option value="Bloque 2">Bloque 2</option>
+    </select>
+    
+    <label for="variedad">Variedad de rosas:</label>
+    <select id="variedad" name="variedad">
+        <option value="Momentum">Momentum</option>
+        <option value="Playa Blanca">Playa Blanca</option>
+        <option value="Mondial">Mondial</option>
+        <option value="Mandala">Mandala</option>
+        <option value="Freedom">Freedom</option>
+        <option value="Explorer">Explorer</option>
+        <option value="Full Monty">Full Monty</option>
+    </select>
+    
+    <label for="plagas">Plagas:</label>
+    <select id="plagas" name="plagas">
+        <option value="Botrytis">Botrytis</option>
+        <option value="Acaros T. Bajo">Acaros T. Bajo</option>
+        <option value="Acaros T. Medio">Acaros T. Medio</option>
+        <option value="Acaros T. Alto">Acaros T. Alto</option>
+        <option value="Trips">Trips</option>
+        <option value="Oidio">Oidio</option>
+        <option value="Velloso">Velloso</option>
+        <option value="Royal">Royal</option>
+        <option value="Afidos">Afidos</option>
+    </select>
+    
+    <label for="camasMonitoreadas">Camas Monitoreadas:</label>
+    <input type="number" id="camasMonitoreadas" name="camasMonitoreadas">
+    
+    <label for="numeroCuadros">Número de cuadros:</label>
+    <input type="number" id="numeroCuadros" name="numeroCuadros">
+    
+    <input type="button" value="Agregar Datos" onclick="agregarDatos()">
+    <input type="button" value="Actualizar Resumen" onclick="actualizarResumen()">
+    <input type="button" value="Exportar a Excel" onclick="exportarExcel()">
+</form>
+
+<div style="margin: 20px auto; max-width: 500px;">
+    <table id="tablaInformacion">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Semana</th>
+                <th>Bloque</th>
+                <th>Variedad</th>
+                <th>PLAGA</th>
+                <th>N° TOTAL DE CAMAS</th>
+                <th>N° TOTAL DE SITIOS</th>
+                <th>CAMAS MONITOREADAS</th>
+                <th>CUADROS AFECTADOS</th>
+                
+            </tr>
+        </thead>
+        <tbody id="tablaInformacionBody">
+            <!-- Aquí se mostrará la información ingresada -->
+        </tbody>
+    </table>
+
+    <table id="tablaResumen">
+        <thead>
+            <tr>
+                <th>Variedad</th>
+                <th>N° Registros de Camas Monitoreadas</th>
+                <th>N° Registros de Cuadros Afectados</th>
+                <th>N° TOTAL DE CAMAS</th>
+                <th>N° TOTAL DE SITIOS</th>
+                <th>INCIDENCIA</th>
+                <th>SEVERIDAD (%)</th>
+            </tr>
+        </thead>
+        <tbody id="tablaResumenBody">
+            <!-- Aquí se mostrará la tabla resumen -->
+        </tbody>
+    </table>
+
+    <canvas id="graficoResumen"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var camasMonitoreadasPorVariedad = {};
+    var cuadrosAfectadosPorVariedad = {};
+
+    function agregarDatos() {
+        var fecha = document.getElementById("fecha").value;
+        var semana = document.getElementById("semana").value;
+        var bloque = document.getElementById("bloque").value;
+        var variedad = document.getElementById("variedad").value;
+        var plagas = document.getElementById("plagas").value;
+        var camasMonitoreadas = parseInt(document.getElementById("camasMonitoreadas").value);
+        var numeroCuadros = parseInt(document.getElementById("numeroCuadros").value);
+        var numeroTotalDeCamas = 0;
+        var numeroTotalDeSitios = 0;
+
+        // Calcular número total de camas y sitios estáticos por variedad
+        switch (variedad) {
+            case 'Momentum':
+                numeroTotalDeCamas = 7;
+                numeroTotalDeSitios = 35;
+                break;
+            case 'Playa Blanca':
+                numeroTotalDeCamas = 21;
+                numeroTotalDeSitios = 66;
+                break;
+            case 'Mondial':
+                numeroTotalDeCamas = 11;
+                numeroTotalDeSitios = 55;
+                break;
+            case 'Mandala':
+                numeroTotalDeCamas = 9;
+                numeroTotalDeSitios = 54;
+                break;
+            case 'Freedom':
+                numeroTotalDeCamas = 22;
+                numeroTotalDeSitios = 132;
+                break;
+            case 'Explorer':
+                numeroTotalDeCamas = 29;
+                numeroTotalDeSitios = 152;
+                break;
+            case 'Full Monty':
+                numeroTotalDeCamas = 13;
+                numeroTotalDeSitios = 78;
+                break;
+            default:
+                break;
+        }
+
+        // Calcular incidencia y severidad
+        var incidencia = (camasMonitoreadas / numeroTotalDeCamas * 100).toFixed(2);
+        var severidad = (numeroCuadros / numeroTotalDeSitios * 100).toFixed(2);
+
+        // Actualizar el registro de camas monitoreadas por variedad
+        if (camasMonitoreadasPorVariedad.hasOwnProperty(variedad)) {
+            camasMonitoreadasPorVariedad[variedad]++;
+        } else {
+            camasMonitoreadasPorVariedad[variedad] = 1;
+        }
+
+        // Actualizar el registro de cuadros afectados por variedad
+        if (cuadrosAfectadosPorVariedad.hasOwnProperty(variedad)) {
+            cuadrosAfectadosPorVariedad[variedad] ++;
+        } else {
+            cuadrosAfectadosPorVariedad[variedad] = 1;
+        }
+
+        // Insertar fila en la tablaInformacion
+        var tablaInformacion = document.getElementById("tablaInformacionBody");
+        var fila = tablaInformacion.insertRow();
+        var celdas = [
+            fecha,
+            semana,
+            bloque,
+            variedad,
+            plagas,
+            numeroTotalDeCamas,
+            numeroTotalDeSitios,
+            camasMonitoreadas,
+            numeroCuadros,
+            
+        ];
+
+        celdas.forEach(function(valor) {
+            var celda = fila.insertCell();
+            celda.textContent = valor;
+        });
+    }
+
+    function actualizarResumen() {
+        var tablaResumenBody = document.getElementById("tablaResumenBody");
+        tablaResumenBody.innerHTML = '';
+
+        for (var variedad in camasMonitoreadasPorVariedad) {
+            if (camasMonitoreadasPorVariedad.hasOwnProperty(variedad)) {
+                var registrosCamas = camasMonitoreadasPorVariedad[variedad];
+                var registrosCuadros = cuadrosAfectadosPorVariedad[variedad] || 0;
+                var numeroTotalDeCamas = 0;
+                var numeroTotalDeSitios = 0;
+
+                // Calcular número total de camas y sitios estáticos por variedad
+                switch (variedad) {
+                    case 'Momentum':
+                        numeroTotalDeCamas = 7;
+                        numeroTotalDeSitios = 35;
+                        break;
+                    case 'Playa Blanca':
+                        numeroTotalDeCamas = 21;
+                        numeroTotalDeSitios = 66;
+                        break;
+                    case 'Mondial':
+                        numeroTotalDeCamas = 11;
+                        numeroTotalDeSitios = 55;
+                        break;
+                    case 'Mandala':
+                        numeroTotalDeCamas = 9;
+                        numeroTotalDeSitios = 54;
+                        break;
+                    case 'Freedom':
+                        numeroTotalDeCamas = 22;
+                        numeroTotalDeSitios = 132;
+                        break;
+                    case 'Explorer':
+                        numeroTotalDeCamas = 29;
+                        numeroTotalDeSitios = 152;
+                        break;
+                    case 'Full Monty':
+                        numeroTotalDeCamas = 13;
+                        numeroTotalDeSitios = 78;
+                        break;
+                    default:
+                        break;
+                }
+
+                // Calcular incidencia y severidad
+                var incidencia = (registrosCamas / numeroTotalDeCamas * 100).toFixed(2);
+                var severidad = (registrosCuadros / numeroTotalDeSitios * 100).toFixed(2);
+
+                // Crear fila de la tabla resumen
+                var filaResumen = tablaResumenBody.insertRow();
+                var celdaVariedad = filaResumen.insertCell();
+                celdaVariedad.textContent = variedad;
+                var celdaRegistrosCamas = filaResumen.insertCell();
+                celdaRegistrosCamas.textContent = registrosCamas;
+                var celdaRegistrosCuadros = filaResumen.insertCell();
+                celdaRegistrosCuadros.textContent = registrosCuadros;
+                var celdaNumeroTotalDeCamas = filaResumen.insertCell();
+                celdaNumeroTotalDeCamas.textContent = numeroTotalDeCamas;
+                var celdaNumeroTotalDeSitios = filaResumen.insertCell();
+                celdaNumeroTotalDeSitios.textContent = numeroTotalDeSitios;
+                var celdaIncidencia = filaResumen.insertCell();
+                celdaIncidencia.textContent = incidencia + '%';
+                var celdaSeveridad = filaResumen.insertCell();
+                celdaSeveridad.textContent = severidad + '%';
+            }
+        }
+
+        // Actualizar gráfico
+        actualizarGrafico();
+    }
+
+    function actualizarGrafico() {
+        var nombresVariedad = [];
+        var incidencias = [];
+        var severidades = [];
+
+        for (var variedad in camasMonitoreadasPorVariedad) {
+            if (camasMonitoreadasPorVariedad.hasOwnProperty(variedad)) {
+                nombresVariedad.push(variedad);
+                var registrosCamas = camasMonitoreadasPorVariedad[variedad];
+                var registrosCuadros = cuadrosAfectadosPorVariedad[variedad] || 0;
+                var numeroTotalDeCamas = 0;
+                var numeroTotalDeSitios = 0;
+
+                // Calcular número total de camas y sitios estáticos por variedad
+                switch (variedad) {
+                    case 'Momentum':
+                        numeroTotalDeCamas = 7;
+                        numeroTotalDeSitios = 35;
+                        break;
+                    case 'Playa Blanca':
+                        numeroTotalDeCamas = 21;
+                        numeroTotalDeSitios = 66;
+                        break;
+                    case 'Mondial':
+                        numeroTotalDeCamas = 11;
+                        numeroTotalDeSitios = 55;
+                        break;
+                    case 'Mandala':
+                        numeroTotalDeCamas = 9;
+                        numeroTotalDeSitios = 54;
+                        break;
+                    case 'Freedom':
+                        numeroTotalDeCamas = 22;
+                        numeroTotalDeSitios = 132;
+                        break;
+                    case 'Explorer':
+                        numeroTotalDeCamas = 29;
+                        numeroTotalDeSitios = 152;
+                        break;
+                    case 'Full Monty':
+                        numeroTotalDeCamas = 13;
+                        numeroTotalDeSitios = 78;
+                        break;
+                    default:
+                        break;
+                }
+
+                // Calcular incidencia y severidad
+                var incidencia = (registrosCamas / numeroTotalDeCamas * 100).toFixed(2);
+                var severidad = (registrosCuadros / numeroTotalDeSitios * 100).toFixed(2);
+
+                incidencias.push(parseFloat(incidencia));
+                severidades.push(parseFloat(severidad));
+            }
+        }
+
+        var ctx = document.getElementById("graficoResumen").getContext('2d');
+        var graficoResumen = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: nombresVariedad,
+                datasets: [{
+                    label: 'Incidencia',
+                    data: incidencias,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Severidad',
+                    data: severidades,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function exportarExcel() {
+        var wb = XLSX.utils.book_new();
+
+        // Exportar tablaInformacion
+        var wsInformacion = XLSX.utils.table_to_sheet(document.getElementById("tablaInformacion"));
+        XLSX.utils.book_append_sheet(wb, wsInformacion, "Tabla Información");
+
+        // Exportar tablaResumen
+        var wsResumen = XLSX.utils.table_to_sheet(document.getElementById("tablaResumen"));
+        XLSX.utils.book_append_sheet(wb, wsResumen, "Tabla Resumen");
+
+        // Exportar gráficoResumen como imagen base64
+        var graficoResumen = document.getElementById("graficoResumen");
+        var graficoResumenBase64 = graficoResumen.toDataURL("image/png");
+        var wsGraficoResumen = XLSX.utils.json_to_sheet([{ '': graficoResumenBase64 }]);
+        XLSX.utils.book_append_sheet(wb, wsGraficoResumen, "Gráfico Resumen");
+
+        // Save to file
+        XLSX.writeFile(wb, "datos.xlsx");
+    }
+</script>
+
+</body>
+</html>
