@@ -132,7 +132,6 @@
     <input type="number" id="numeroCuadros" name="numeroCuadros">
     
     <input type="button" value="Agregar Datos" onclick="agregarDatos()">
-    <input type="button" value="Actualizar Resumen" onclick="actualizarResumen()">
     <input type="button" value="Exportar a Excel" onclick="exportarExcel()">
        
     <!-- Botón para limpiar toda la información -->
@@ -468,6 +467,7 @@ function limpiarInformacion() {
         XLSX.writeFile(wb, "datos.xlsx");
     }
 </script>
+<input type="button" value="Actualizar Resumen" onclick="actualizarResumen()" ontouchstart="actualizarResumen()">
 
 </body>
 </html>
